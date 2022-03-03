@@ -1,5 +1,5 @@
 {application, nomina_resuelve_fc,
- [{description, "An OTP application"},
+ [{description, "Application OTP Nomina Resuelve FC"},
   {vsn, "0.1.0"},
   {registered, []},
   {mod, {nomina_resuelve_fc_app, []}},
