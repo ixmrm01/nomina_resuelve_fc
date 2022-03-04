@@ -12,6 +12,7 @@
 
 %% API
 -export([start_link/0]).
+-export([obtener_nomina/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -36,6 +37,10 @@
 	ignore.
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+-spec obtener_nomina(map()) -> list(). 
+obtener_nomina(Trama) ->
+  gen_server:call(?SERVER, {obtener_nomina, Trama}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -71,8 +76,11 @@ init([]) ->
 	{noreply, NewState :: term(), hibernate} |
 	{stop, Reason :: term(), Reply :: term(), NewState :: term()} |
 	{stop, Reason :: term(), NewState :: term()}.
+handle_call({obtener_nomina, Trama}, _From, State) ->
+  Reply = nomina_equipo(Trama),
+  {reply, Reply, State};
 handle_call(_Request, _From, State) ->
-  Reply = ok,
+  Reply = undefined,
   {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
@@ -146,3 +154,34 @@ format_status(_Opt, Status) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+-spec nomina_equipo(map()) -> list().
+nomina_equipo(#{<<"jugadores">> := Jugadores}) ->
+  {GolesEquipo, MetaGolesEquipo} = acumular_goles_equipo(Jugadores, 0, 0),
+  AlcanceEquipo = GolesEquipo / MetaGolesEquipo,
+  calcular_sueldo(Jugadores, AlcanceEquipo, []).
+
+-spec calcular_sueldo(list(), number(), list()) -> list().
+calcular_sueldo([], _AlcanceEquipo, JugadoresSueldo) ->
+  JugadoresSueldo;
+calcular_sueldo([#{<<"goles">> := Goles, <<"nivel">> := Nivel, <<"bono">> := Bono, <<"sueldo">> := Sueldo} = Jugador | Jugadores], AlcanceEquipo, JugadoresSueldo) ->
+  MetaGolesIndividual = meta_goles_individual(Nivel),
+  AlcanceIndividual = Goles / MetaGolesIndividual,
+  AlcanceTotal = ((AlcanceEquipo + AlcanceIndividual) / 2),
+  BonoVariable = Bono * AlcanceTotal,
+  SueldoCompleto = io_lib:format("~.2f", [Sueldo + BonoVariable]),
+  calcular_sueldo(Jugadores, AlcanceEquipo, [maps:update(<<"sueldo_completo">>, SueldoCompleto, Jugador) | JugadoresSueldo]).
+
+-spec acumular_goles_equipo(list(), number(), number()) -> {number(), number()}.
+acumular_goles_equipo([], GolesEquipo, MetaGolesEquipo) ->
+  {GolesEquipo, MetaGolesEquipo};
+acumular_goles_equipo([#{<<"goles">> := Goles, <<"nivel">> := Nivel} | Jugadores], GolesEquipo, MetaGolesEquipo) ->
+  MetaGolesIndividual = meta_goles_individual(Nivel),
+  acumular_goles_equipo(Jugadores, GolesEquipo + Goles, MetaGolesEquipo + MetaGolesIndividual).
+
+-spec meta_goles_individual(binary()) -> number().
+meta_goles_individual(<<"A">>) -> 5;
+meta_goles_individual(<<"B">>) -> 10;
+meta_goles_individual(<<"C">>) -> 15;
+meta_goles_individual(<<"Cuauh">>) -> 20;
+meta_goles_individual(_) -> 0.
+
