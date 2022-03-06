@@ -168,7 +168,7 @@ calcular_sueldo([#{<<"goles">> := Goles, <<"nivel">> := Nivel, <<"bono">> := Bon
   AlcanceIndividual = Goles / MetaGolesIndividual,
   AlcanceTotal = ((AlcanceEquipo + AlcanceIndividual) / 2),
   BonoVariable = Bono * AlcanceTotal,
-  SueldoCompleto = io_lib:format("~.2f", [Sueldo + BonoVariable]),
+  SueldoCompleto = trunc(Sueldo + BonoVariable),
   calcular_sueldo(Jugadores, AlcanceEquipo, [maps:update(<<"sueldo_completo">>, SueldoCompleto, Jugador) | JugadoresSueldo]).
 
 -spec acumular_goles_equipo(list(), number(), number()) -> {number(), number()}.
