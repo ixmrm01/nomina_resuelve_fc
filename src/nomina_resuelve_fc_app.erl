@@ -1,3 +1,4 @@
+
 %%%-------------------------------------------------------------------
 %% @doc nomina_resuelve_fc public API
 %% @end
@@ -10,9 +11,19 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    nomina_resuelve_fc_sup:start_link().
+  Dispatch =
+    cowboy_router:compile([
+			   {'_', [
+				  {"/api/nomina", toppage_h, []}
+				 ]}
+			  ]),
+  {ok, _} = cowboy:start_clear(http,
+			       [{port, 8080}],
+			       #{env => #{dispatch => Dispatch}}
+			      ),
+  nomina_resuelve_fc_sup:start_link().
 
 stop(_State) ->
-    ok.
+  ok = cowboy:stop_listener(http).
 
 %% internal functions

@@ -76,8 +76,8 @@ init([]) ->
 	{noreply, NewState :: term(), hibernate} |
 	{stop, Reason :: term(), Reply :: term(), NewState :: term()} |
 	{stop, Reason :: term(), NewState :: term()}.
-handle_call({obtener_nomina, Trama}, _From, State) ->
-  Reply = nomina_equipo(Trama),
+handle_call({obtener_nomina, Jugadores}, _From, State) ->
+  Reply = nomina_equipo(Jugadores),
   {reply, Reply, State};
 handle_call(_Request, _From, State) ->
   Reply = undefined,
